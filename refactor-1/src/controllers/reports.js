@@ -77,8 +77,6 @@ async function sendCompanyMonthlyNewsletter(allUsersByGenre, departments, receiv
 
 
 async function sendMonthlyReports(request, response, next) {
-    response.send("Hola mundo desde sendMonthlyReports! company is " + request.params.companyId)
-    return
     const { companyId } = request.params
 
     try {
