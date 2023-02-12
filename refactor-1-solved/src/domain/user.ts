@@ -1,11 +1,23 @@
 import { Department } from "./department"
 
+export enum UserGenre {
+    MALE = 'M',
+    FEMALE = 'F'
+}
+
+export enum UserAccessType {
+    ADMIN = 1,
+    NOT_ADMIN = 2
+}
+
 export class User {
 
     constructor(
         private id: number,
         private fullName: string,
         private email: string,
+        private genre: UserGenre,
+        private accessType: UserAccessType = UserAccessType.NOT_ADMIN,
         private department: Department = null
     ){}
 
@@ -19,6 +31,14 @@ export class User {
 
     public getEmail(): string {
         return this.email
+    }
+
+    public getGenre(): UserGenre {
+        return this.genre
+    }
+
+    public getAccessType(): UserAccessType {
+        return this.accessType
     }
 
     public getDepartment(): Department {

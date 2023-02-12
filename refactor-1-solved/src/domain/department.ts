@@ -1,4 +1,4 @@
-import { User } from "./user"
+import { User, UserAccessType, UserGenre } from "./user"
 
 export class Department {
     private users: User[] = []
@@ -23,5 +23,13 @@ export class Department {
     public addUser(u: User) {
         this.users.push(u)
         u.setDepartment(this)
+    }
+
+    public getUsersByGenre(genre: UserGenre): User[] {
+        return this.getUsers().filter(u => u.getGenre() === genre)
+    }
+
+    public getAdminUsers(): User[] {
+        return this.getUsers().filter(u => u.getAccessType() === UserAccessType.ADMIN)
     }
 }

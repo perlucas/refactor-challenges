@@ -47,9 +47,9 @@ export class NodemailerProvider implements ReportingServiceProvider {
                     user: SMTP_USERNAME,
                     pass: SMTP_PASSWORD,
                 },
-            });    
+            });
         }
-        
+
         return this.transporter
     }
 }
