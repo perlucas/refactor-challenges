@@ -12,8 +12,9 @@ export class CustomReportBuilder implements ReportBuilder {
 
     async buildReports(): Promise<Report[]> {
         const departments = await this.departmentRepository.getAllDepartments(this.companyId)
-        const reports: Report[] = departments.map(d => new EmployeesByDepartmentReport(d))
-        reports.push(new CompanyMonthlyNewsletterReport(departments))
-        return reports
+        return [
+            ...departments.map(d => new EmployeesByDepartmentReport(d)),
+            new CompanyMonthlyNewsletterReport(departments)
+        ]
     }
 }

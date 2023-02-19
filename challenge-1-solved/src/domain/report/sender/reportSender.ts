@@ -1,10 +1,10 @@
-import { ReportingServiceProvider } from "../provider/reportingServiceProvider";
+import { ReportingChannel } from "../channel/reportingChannel";
 import { Report } from "../report/report";
 
-export class ReportingChannel {
-    private providers: ReportingServiceProvider[] = []
+export class ReportSender {
+    private providers: ReportingChannel[] = []
 
-    registerProvider(provider: ReportingServiceProvider) {
+    registerProvider(provider: ReportingChannel) {
         this.providers.push(provider)
     }
 

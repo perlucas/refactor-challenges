@@ -1,5 +1,5 @@
 import { ReportFormat } from "../../domain/report/format/reportFormat";
-import { ReportingServiceProvider } from "../../domain/report/provider/reportingServiceProvider";
+import { ReportingChannel } from "../../domain/report/channel/reportingChannel";
 import { Report } from "../../domain/report/report/report";
 import { NodemailerEmailFormat } from "./reportFormat";
 import nodemailer from 'nodemailer'
@@ -11,7 +11,7 @@ const {
     SMTP_PASSWORD
 } = process.env
 
-export class NodemailerProvider implements ReportingServiceProvider {
+export class EmailChannel implements ReportingChannel {
     private format: ReportFormat = new NodemailerEmailFormat()
     private reports: Report[] = []
     private transporter: any = null
