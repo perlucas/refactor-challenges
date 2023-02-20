@@ -24,7 +24,7 @@ const transporter = nodemailer.createTransport({
 
 async function sendEmployeesByDepartmentReport(usersByGenre, department, receiverUsers) {
 
-    if (!usersByGenre.male || !usersByGenre.female || !receiverUsers.length) {
+    if (!receiverUsers.length) {
         throw new CustomError('cannot send report')
     }
 
@@ -43,7 +43,7 @@ async function sendEmployeesByDepartmentReport(usersByGenre, department, receive
 }
 
 async function sendCompanyMonthlyNewsletter(allUsersByGenre, departments, receiverUsers) {
-    if (!usersByGenre.male || !usersByGenre.female || !receiverUsers.length) {
+    if (!receiverUsers.length) {
         throw new CustomError('cannot send report')
     }
 
@@ -52,7 +52,7 @@ async function sendCompanyMonthlyNewsletter(allUsersByGenre, departments, receiv
 
     for (const departmentId in allUsersByGenre) {
         const stats = allUsersByGenre[departmentId]
-        const department = departments.find(d => d.id === departmentId)
+        const department = departments.find(d => d.id === +departmentId)
 
         const message = `Male employees: ${stats.male}
         Female employees: ${stats.female}`
@@ -96,6 +96,7 @@ async function sendMonthlyReports(request, response, next) {
                     female: (u.genre === 'Female' ? 1 : 0)
                 }
             }
+            return d
         }, {})
 
         const departmentsResponse = await axios.get(`${API_BASE_URL}/company/${companyId}/departments`)
@@ -129,5 +130,5 @@ async function sendMonthlyReports(request, response, next) {
 }
 
 module.exports = {
-    sendMonthlyReport: sendMonthlyReports
+    sendMonthlyReports
 }

@@ -8,7 +8,7 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.post('/company/:companyId/reports/monthly/send', reportsController.sendMonthlyReport)
+app.post('/company/:companyId/reports/monthly/send', reportsController.sendMonthlyReports)
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
