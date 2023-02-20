@@ -17,8 +17,6 @@ export class EmailChannel implements ReportingChannel {
     private transporter: any = null
 
     register(report: Report): boolean {
-        console.log(`registering report, supported?: ${report.supportsFormat(this.format)}`)
-
         if (report.supportsFormat(this.format)) {
             this.reports.push(report)
             return true
@@ -28,7 +26,7 @@ export class EmailChannel implements ReportingChannel {
 
     async sendAll(): Promise<void> {
         await Promise.all(
-            this.reports.map(this.sendReport)
+            this.reports.map(this.sendReport.bind(this))
         )
     }
 

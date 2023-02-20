@@ -8,17 +8,11 @@ const mocks = {
     }
 }
 
-// @ts-ignore
-import controller from "controllers/reports"
-
 process.env.COMPANY_EMAIL = 'company@test.com'
-
 
 jest.mock('axios', () => {
     return {
-        default: {
-            get: mocks.getFn
-        }
+        get: mocks.getFn
     }
 })
 
@@ -28,13 +22,16 @@ jest.mock('nodemailer', () => {
     }
 })
 
+// @ts-ignore
+import controller from "controllers/reports"
+
 describe('reporting feature tests', () => {
     const requestMock = {params: {companyId: 100}}
 
     test('should send reports as expected, both department and company wide', async () => {
 
-        // mocked users
-        mocks.getFn.mockResolvedValueOnce([
+        const usersJson = {
+            data: [
             {
                 id: 1,
                 departmentId: 1,
@@ -99,10 +96,10 @@ describe('reporting feature tests', () => {
                 email: 'test8@test.com',
                 isActive: false
             }
-        ])
+        ]}
 
-        // mocked departments
-        mocks.getFn.mockResolvedValueOnce([
+        const departmentsJson = {
+            data:[
             {
                 id: 1,
                 name: 'Test 1'
@@ -111,7 +108,16 @@ describe('reporting feature tests', () => {
                 id: 3,
                 name: 'Test 3'
             }
-        ])
+        ]}
+
+        mocks.getFn.mockImplementation(uri => {
+            if (uri.endsWith('/departments')) {
+                return Promise.resolve(departmentsJson)
+            } else if (uri.endsWith('/users')) {
+                return Promise.resolve(usersJson)
+            }
+            return null
+        })
 
         await controller.sendMonthlyReports(requestMock, mocks.response, () => {})
 
@@ -120,11 +126,11 @@ describe('reporting feature tests', () => {
             to: 'test4@test.com',
             subject: `Monthly Department Report - Test 1`,
             text:`Male employees: 3
-    Female employees: 2`,
+        Female employees: 2`,
             html: `<h1>Monthly Department Report - Department Test 1</h1>
-        <p>Male employees: 3
-    Female employees: 2</p>
-        `
+            <p>Male employees: 3
+        Female employees: 2</p>
+            `
         })
 
         expect(mocks.nodemailerTransport.sendMail).toHaveBeenNthCalledWith(2, {
@@ -132,11 +138,11 @@ describe('reporting feature tests', () => {
             to: 'test5@test.com',
             subject: `Monthly Department Report - Test 3`,
             text:`Male employees: 1
-    Female employees: 1`,
+        Female employees: 1`,
             html: `<h1>Monthly Department Report - Department Test 3</h1>
-        <p>Male employees: 1
-    Female employees: 1</p>
-        `
+            <p>Male employees: 1
+        Female employees: 1</p>
+            `
         })
 
         expect(mocks.nodemailerTransport.sendMail).toHaveBeenNthCalledWith(3, {
@@ -144,62 +150,74 @@ describe('reporting feature tests', () => {
             to: 'test4@test.com, test5@test.com',
             subject: "Monthly Department Report - Company",
             text: `- Department Test 1 -
-        Male employees: 3
-        Female employees: 2- Department Test 3 -
-        Male employees: 1
-        Female employees: 1`,
+            Male employees: 3
+            Female employees: 2- Department Test 3 -
+            Male employees: 1
+            Female employees: 1`,
             html: `<h1>Department Test 1</h1>
-        <p>Male employees: 3
-        Female employees: 2</p><h1>Department Test 3</h1>
-        <p>Male employees: 1
-        Female employees: 1</p>`
+            <p>Male employees: 3
+            Female employees: 2</p><h1>Department Test 3</h1>
+            <p>Male employees: 1
+            Female employees: 1</p>`
         })
 
     })
 
-    test.skip('should return HTTP 200 if fails with CustomError', async () => {
-          // mocked users
-          mocks.getFn.mockResolvedValueOnce([
-            {
-                id: 1,
-                departmentId: 1,
-                genre: 'Male',
-                isAdmin: false,
-                email: 'test1@test.com',
-                isActive: true
-            },
-            {
-                id: 2,
-                departmentId: 3,
-                genre: 'Female',
-                isAdmin: false,
-                email: 'test2@test.com',
-                isActive: true
-            }
-        ])
+    test('should return HTTP 200 if fails with CustomError', async () => {
+          const usersJson = {
+            data: [
+                {
+                    id: 1,
+                    departmentId: 1,
+                    genre: 'Male',
+                    isAdmin: false,
+                    email: 'test1@test.com',
+                    isActive: true
+                },
+                {
+                    id: 2,
+                    departmentId: 3,
+                    genre: 'Female',
+                    isAdmin: false,
+                    email: 'test2@test.com',
+                    isActive: true
+                }
+            ]
+        }
 
-        // mocked departments
-        mocks.getFn.mockResolvedValueOnce([
-            {
-                id: 1,
-                name: 'Test 1'
-            },
-            {
-                id: 3,
-                name: 'Test 3'
+        const departmentsJson = {
+            data: [
+                {
+                    id: 1,
+                    name: 'Test 1'
+                },
+                {
+                    id: 3,
+                    name: 'Test 3'
+                }
+            ]
+        }
+
+        mocks.getFn.mockImplementation(uri => {
+            if (uri.endsWith('/departments')) {
+                return Promise.resolve(departmentsJson)
+            } else if (uri.endsWith('/users')) {
+                return Promise.resolve(usersJson)
             }
-        ])
+            return null
+        })
 
         await controller.sendMonthlyReports(requestMock, mocks.response)
 
         expect(mocks.response.sendStatus).toHaveBeenCalledWith(200)
     })
 
-    test.skip('should throw up error if not CustomError instance', async () => {
-        mocks.getFn.mockRejectedValue(new Error('test'))
+    test('should return HTTP 500 if no CustomError instance', async () => {
+        mocks.getFn.mockImplementation(() => Promise.reject(new Error('test')))
 
-        expect(async () => await controller.sendMonthlyReports(requestMock, mocks.response))
-            .rejects.toThrow('test')
+        await controller.sendMonthlyReports(requestMock, mocks.response)
+        
+        expect(mocks.response.sendStatus).toHaveBeenCalledWith(500)
     })
 
 })

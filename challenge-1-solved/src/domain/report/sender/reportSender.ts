@@ -4,8 +4,8 @@ import { Report } from "../report/report";
 export class ReportSender {
     private channels: ReportingChannel[] = []
 
-    registerChannel(provider: ReportingChannel) {
-        this.channels.push(provider)
+    registerChannel(channel: ReportingChannel) {
+        this.channels.push(channel)
     }
 
     pushReport(report: Report) {
@@ -16,7 +16,7 @@ export class ReportSender {
 
     async dispatchAll(): Promise<void> {
         await Promise.all(
-            this.channels.map(p => p.sendAll())
+            this.channels.map(c => c.sendAll())
         )
     }
 }
