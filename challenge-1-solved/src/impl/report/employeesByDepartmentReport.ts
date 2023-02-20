@@ -1,8 +1,8 @@
 import { Department } from "../../domain/department";
 import { ReportFormat } from "../../domain/report/format/reportFormat";
 import { Report } from "../../domain/report/report/report";
-import { UserAccessType, UserGenre } from "../../domain/user";
-import { CustomError } from "../../utils/errors";
+import { UserGenre } from "../../domain/user";
+import { CustomError } from "../../utils/errors/custom";
 
 const { COMPANY_EMAIL } = process.env
 

@@ -1,8 +1,8 @@
-import { CustomHandler, DefaultHandler, LoggerHandler } from '../utils/errors'
 import { CustomReportBuilder } from '../impl/builder/customReportBuilder'
 import { APIDepartmentRepository } from '../impl/repository/api/departmentRepository'
 import { ReportSender } from '../domain/report/sender/reportSender'
 import { EmailChannel } from '../impl/nodemailer/emailChannel'
+import { LoggerHandler, CustomHandler, DefaultHandler } from '../utils/errors/handlers'
 
 async function sendMonthlyReports(request, response, next) {
     const { companyId } = request.params

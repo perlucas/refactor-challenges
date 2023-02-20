@@ -2,21 +2,21 @@ import { ReportingChannel } from "../channel/reportingChannel";
 import { Report } from "../report/report";
 
 export class ReportSender {
-    private providers: ReportingChannel[] = []
+    private channels: ReportingChannel[] = []
 
     registerChannel(provider: ReportingChannel) {
-        this.providers.push(provider)
+        this.channels.push(provider)
     }
 
     pushReport(report: Report) {
-        for (const provider of this.providers) {
-            provider.register(report)
+        for (const channel of this.channels) {
+            channel.register(report)
         }
     }
 
     async dispatchAll(): Promise<void> {
         await Promise.all(
-            this.providers.map(p => p.sendAll())
+            this.channels.map(p => p.sendAll())
         )
     }
 }
