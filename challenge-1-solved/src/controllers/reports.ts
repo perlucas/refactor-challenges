@@ -1,128 +1,37 @@
-import axios from 'axios'
-import nodemailer from 'nodemailer'
-import logger from '../utils/logger'
-import {CustomError} from '../utils/errors'
-
-const {
-    API_BASE_URL,
-    COMPANY_EMAIL,
-    SMTP_HOST,
-    SMTP_PORT,
-    SMTP_USERNAME,
-    SMTP_PASSWORD
-} = process.env
-
-const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: false,
-    auth: {
-        user: SMTP_USERNAME,
-        pass: SMTP_PASSWORD,
-    },
-});
-
-async function sendEmployeesByDepartmentReport(usersByGenre, department, receiverUsers) {
-
-    if (!usersByGenre.male || !usersByGenre.female || !receiverUsers.length) {
-        throw new CustomError('cannot send report')
-    }
-
-    const message = `Male employees: ${usersByGenre.male}
-    Female employees: ${usersByGenre.female}`
-
-    await transporter.sendMail({
-        from: COMPANY_EMAIL,
-        to: receiverUsers.map(u => u.email).join(', '),
-        subject: `Monthly Department Report - ${department.name}`,
-        text: message,
-        html: `<h1>Monthly Department Report - Department ${department.name}</h1>
-        <p>${message}</p>
-        `
-    })
-}
-
-async function sendCompanyMonthlyNewsletter(allUsersByGenre, departments, receiverUsers) {
-    if (!allUsersByGenre.male || !allUsersByGenre.female || !receiverUsers.length) {
-        throw new CustomError('cannot send report')
-    }
-
-    let plainTextMessage = ''
-    let htmlMessage = ''
-
-    for (const departmentId of Object.keys(allUsersByGenre)) {
-        const stats = allUsersByGenre[departmentId]
-        const department = departments.find(d => d.id === departmentId)
-
-        const message = `Male employees: ${stats.male}
-        Female employees: ${stats.female}`
-
-        plainTextMessage += `- Department ${department.name} -
-        ${message}`
-
-        htmlMessage += `<h1>Department ${department.name}</h1>
-        <p>${message}</p>`
-    }
-
-
-    await transporter.sendMail({
-        from: COMPANY_EMAIL,
-        to: receiverUsers.map(u => u.email).join(', '),
-        subject: "Monthly Department Report - Company",
-        text: plainTextMessage,
-        html: htmlMessage
-    })
-}
-
+import { CustomHandler, DefaultHandler, LoggerHandler } from '../utils/errors'
+import { CustomReportBuilder } from '../impl/builder/customReportBuilder'
+import { APIDepartmentRepository } from '../impl/repository/api/departmentRepository'
+import { ReportSender } from '../domain/report/sender/reportSender'
+import { EmailChannel } from '../impl/nodemailer/emailChannel'
 
 async function sendMonthlyReports(request, response, next) {
     const { companyId } = request.params
 
     try {
-        const {data: usersResponse} = await axios.get(`${API_BASE_URL}/company/${companyId}/users`)
+        // configure reports sender
+        const sender = new ReportSender()
+        sender.registerChannel(new EmailChannel())
 
-        const activeUsers = usersResponse.filter(u => u.isActive)
+        // prepare and enqueue reports
+        const reportBuilder = new CustomReportBuilder(companyId, new APIDepartmentRepository())
+        const reports = await reportBuilder.buildReports()
 
-        const usersPerDepartmentAndGenre = activeUsers.reduce((d, u) => {
-            if (d[u.departmentId]) {
-                d[u.departmentId] = {
-                    male: d[u.departmentId].male + (u.genre === 'Male' ? 1 : 0),
-                    female: d[u.departmentId].female + (u.genre === 'Female' ? 1 : 0)
-                }
-            } else {
-                d[u.departmentId] = {
-                    male: (u.genre === 'Male' ? 1 : 0),
-                    female: (u.genre === 'Female' ? 1 : 0)
-                }
-            }
-        }, {})
+        reports.forEach(r => sender.pushReport(r))
 
-        const {data: departmentsResponse} = await axios.get(`${API_BASE_URL}/company/${companyId}/departments`)
-        for (const department of departmentsResponse) {
-            await sendEmployeesByDepartmentReport(
-                usersPerDepartmentAndGenre[department.id],
-                department,
-                activeUsers.filter(u => u.departmentId === department.id && u.isAdmin)
-            )
-        }
-
-        await sendCompanyMonthlyNewsletter(
-            usersPerDepartmentAndGenre,
-            departmentsResponse,
-            activeUsers.filter(u => u.isAdmin)
-        )
+        // send them all
+        await sender.dispatchAll()
 
         response.sendStatus(200)
 
     } catch (err) {
-        logger.error(err.message || 'Error')
 
-        if (err instanceof CustomError) {
-            response.sendStatus(200)
-            return
-        }
+        const handlerChain = new LoggerHandler(
+            new CustomHandler(
+                new DefaultHandler()
+            )
+        )
 
-        throw err
+        handlerChain.handle(err, response)
     }
 
 }

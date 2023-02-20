@@ -4,7 +4,7 @@ import { Report } from "../report/report";
 export class ReportSender {
     private providers: ReportingChannel[] = []
 
-    registerProvider(provider: ReportingChannel) {
+    registerChannel(provider: ReportingChannel) {
         this.providers.push(provider)
     }
 

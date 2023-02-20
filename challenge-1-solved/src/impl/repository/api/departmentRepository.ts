@@ -27,7 +27,7 @@ export class APIDepartmentRepository implements DepartmentRepository {
         )
 
         allJsonUsers
-            .filter(jsonUser => jsonUser.departmentId === department.getId())
+            .filter(jsonUser => jsonUser.departmentId === department.getId() && jsonUser.isActive)
             .forEach(jsonUser => {
                 const user = new User(
                     jsonUser.id,
